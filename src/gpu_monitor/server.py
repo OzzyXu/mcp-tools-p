@@ -3,7 +3,7 @@
 import asyncio
 import json
 import os
-from typing import Optional
+from typing import Optional, Dict, Any
 
 from fastmcp import FastMCP
 from .core import GPUMonitor
@@ -190,76 +190,75 @@ async def kill_user_tasks_tool(username: str, server_id: Optional[str] = None, c
 
 
 @app.prompt("summarize_gpu_availability")
-def summarize_gpu_availability():
+def summarize_gpu_availability(servers: Dict[str, Any]) -> str:
     """
     Summarize GPU availability across the cluster in natural language.
     
-    Use this prompt with GPU status data to get a human-friendly summary
-    of which servers are available for new jobs.
+    Args:
+        servers: JSON object with GPU server status data
     
-    Variables:
-    - servers: JSON list of GPU server status objects
+    Returns:
+        A human-friendly summary of GPU availability and recommendations
     """
-    return """You are a helpful assistant analyzing GPU cluster availability.
-
-Here is the current GPU server status:
-
-{{servers}}
-
-Provide a concise summary highlighting:
-1. Which server is most available (lowest utilization, most free memory)
-2. Overall cluster utilization 
-3. Any servers that are offline or have issues
-4. Recommendation for job placement
-
-Format your response to be actionable for someone looking to start a new GPU job.
-Use emojis like 🟢 for available, 🟡 for moderate usage, 🔴 for busy/unavailable."""
+    return (
+        f"You are a helpful assistant analyzing GPU cluster availability.\n\n"
+        f"Here is the current GPU server status:\n\n{json.dumps(servers, indent=2)}\n\n"
+        "Provide a concise summary highlighting:\n"
+        "1. Which server is most available (lowest utilization, most free memory)\n"
+        "2. Overall cluster utilization\n"
+        "3. Any servers that are offline or have issues\n"
+        "4. Recommendation for job placement\n\n"
+        "Format your response to be actionable for someone looking to start a new GPU job.\n"
+        "Use emojis like 🟢 for available, 🟡 for moderate usage, 🔴 for busy/unavailable."
+    )
 
 
 @app.prompt("analyze_user_usage") 
-def analyze_user_usage():
+def analyze_user_usage(username: str, usage: Dict[str, Any]) -> str:
     """
     Analyze a user's GPU usage and provide recommendations.
     
-    Variables:
-    - usage: JSON object with user's GPU usage summary
-    - username: The username being analyzed
+    Args:
+        username: The username being analyzed
+        usage: JSON object with user's GPU usage summary
+    
+    Returns:
+        Analysis and recommendations for the user's GPU usage
     """
-    return """You are a helpful assistant analyzing GPU usage for user {{username}}.
-
-Here is their current GPU usage:
-
-{{usage}}
-
-Provide an analysis including:
-1. Total resource consumption (processes, memory)
-2. Which servers they're using
-3. Whether their usage seems efficient
-4. Any recommendations for optimization
-
-Be constructive and helpful in your analysis."""
+    return (
+        f"You are a helpful assistant analyzing GPU usage for user {username}.\n\n"
+        f"Here is their current GPU usage:\n\n{json.dumps(usage, indent=2)}\n\n"
+        "Provide an analysis including:\n"
+        "1. Total resource consumption (processes, memory)\n"
+        "2. Which servers they're using\n"
+        "3. Whether their usage seems efficient\n"
+        "4. Any recommendations for optimization\n\n"
+        "Be constructive and helpful in your analysis."
+    )
 
 
 @app.prompt("format_kill_confirmation")
-def format_kill_confirmation():
+def format_kill_confirmation(username: str, server_id: str, process_count: int) -> str:
     """
     Format a confirmation message for killing user processes.
     
-    Variables:
-    - username: Username whose processes will be killed
-    - server_id: Server ID (or "all" for all servers)
-    - process_count: Number of processes to be killed
+    Args:
+        username: Username whose processes will be killed
+        server_id: Server ID (or "all" for all servers)
+        process_count: Number of processes to be killed
+    
+    Returns:
+        Formatted confirmation message for process termination
     """
-    return """⚠️  **CONFIRM PROCESS TERMINATION** ⚠️
-
-You are about to kill {{process_count}} GPU processes for user {{username}} on {{server_id}}.
-
-This action is IRREVERSIBLE and will:
-- Terminate all running training/inference jobs
-- Potentially lose unsaved work
-- Free up GPU resources immediately
-
-Type 'YES' to confirm, or 'NO' to cancel."""
+    return (
+        f"⚠️  **CONFIRM PROCESS TERMINATION** ⚠️\n\n"
+        f"You are about to kill {process_count} GPU processes for user {username} on {server_id}.\n\n"
+        "This action is IRREVERSIBLE and will:\n"
+        "- Terminate all running training/inference jobs\n"
+        "- Potentially lose unsaved work\n"
+        "- Free up GPU resources immediately\n\n"
+        "Type 'YES' to confirm, or 'NO' to cancel."
+    )
 
 
 def main():
