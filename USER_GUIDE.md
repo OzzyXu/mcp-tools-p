@@ -53,6 +53,123 @@ Now you can ask Copilot:
 "Kill all my processes on gpu01"
 ```
 
+## 🤖 Advanced: Using MCP Resources and Prompts
+
+Once you have the MCP server configured, you can use advanced features for more detailed analysis.
+
+### 📊 MCP Resources (Direct Data Access)
+
+MCP resources provide direct access to GPU data that you can reference in your questions:
+
+#### Available Resources:
+- `gpu://status` - All server status data
+- `gpu://status/gpu01` - Specific server status
+- `gpu://usage/john` - User's usage across all servers  
+- `gpu://usage/john/gpu01` - User's usage on specific server
+
+#### How to Use Resources:
+```
+# Reference specific server data
+"@gpu://status/gpu01 Is this server suitable for a large training job?"
+
+# Compare multiple servers
+"@gpu://status Compare gpu01 and gpu02 memory availability"
+
+# Analyze user patterns
+"@gpu://usage/john How efficiently is john using GPU resources?"
+```
+
+### 🎯 MCP Prompts (Smart Analysis)
+
+MCP prompts provide intelligent analysis of your GPU data with specialized formatting:
+
+#### 1. **GPU Availability Summary**
+```
+# Ask Copilot to use the summarize_gpu_availability prompt
+"Summarize current GPU availability for job placement"
+
+# This automatically calls the prompt with current cluster data
+# Returns: "🟢 gpu02: 90% free (78GB), 🟡 gpu01: 60% free (45GB)..."
+```
+
+#### 2. **User Usage Analysis**  
+```
+# Get detailed usage analysis
+"Analyze my GPU usage patterns and suggest optimizations"
+
+# For specific users
+"Analyze john's GPU usage - is he using resources efficiently?"
+
+# This calls analyze_user_usage prompt with user data
+```
+
+#### 3. **Process Kill Confirmation**
+```
+# When killing processes, get formatted confirmation
+"I want to kill all my processes on gpu01"
+
+# Copilot uses format_kill_confirmation prompt to show:
+# "⚠️ CONFIRM: Kill 3 processes for user on gpu01"
+```
+
+### 💡 Practical Examples
+
+#### **Planning a Training Job:**
+```
+You: "I need to run a large model training that will use 40GB GPU memory. Which server should I use?"
+
+Copilot: 
+1. Fetches gpu://status 
+2. Uses summarize_gpu_availability prompt
+3. Responds: "🟢 gpu02 is best - has 78GB free with only 10% utilization. gpu01 is busy at 85% utilization."
+```
+
+#### **Monitoring Resource Usage:**
+```
+You: "How is my team using GPU resources this week?"
+
+Copilot:
+1. Fetches gpu://usage data for team members
+2. Uses analyze_user_usage prompt for each
+3. Summarizes patterns and efficiency recommendations
+```
+
+#### **Troubleshooting Issues:**
+```
+You: "Why is gpu01 running slowly?"
+
+Copilot:
+1. Fetches gpu://status/gpu01
+2. Analyzes utilization and memory usage
+3. Identifies: "gpu01 is at 95% utilization with 15GB/16GB memory used. High memory pressure may cause slowdowns."
+```
+
+### 🔧 Tips for Better Results
+
+#### **Be Specific with Server Names:**
+```
+✅ Good: "Check gpu01 availability"
+❌ Vague: "Check server availability"
+```
+
+#### **Reference Users by Name:**
+```
+✅ Good: "Show john's GPU usage"  
+✅ Good: "Compare alice and bob's resource efficiency"
+```
+
+#### **Ask for Recommendations:**
+```
+✅ Good: "Which server is best for a 20GB model?"
+✅ Good: "Should I kill my processes on gpu02?"
+```
+
+#### **Use Time Context:**
+```
+✅ Good: "Show current GPU status"
+✅ Good: "Which server is free right now?"
+```
+
 ## 🛠️ Command Line (Backup Method)
 
 If VSCode isn't working, use these commands:
