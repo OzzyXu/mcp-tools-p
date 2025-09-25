@@ -17,7 +17,7 @@ build-backend = "hatchling.build"
 
 [project.scripts]
 gpu-monitor = "gpu_monitor.cli:main"
-gpu-mcp-server = "gpu_monitor.mcp_server:main"
+gpu-mcp-server = "gpu_monitor.server:main"
 
 [tool.hatchling.build.targets.wheel.sources]
 "src" = ""

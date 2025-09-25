@@ -1,6 +1,6 @@
 """Main entry point for GPU Monitor."""
 
-from gpu_monitor.mcp_server import main as mcp_main
+from gpu_monitor.server import main as mcp_main
 from gpu_monitor.cli import main as cli_main
 import sys
 

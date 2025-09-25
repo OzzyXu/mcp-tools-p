@@ -122,7 +122,7 @@ If VSCode isn't working, use these commands:
 **"Command not found: /shared/tools/gpumonitor"**
 - Ask admin to deploy the script to shared location
 - Or copy it yourself: `cp src/gpu_monitor/gpumonitor /shared/tools/gpumonitor`
-- For older systems: `cp src/gpu_monitor/bash_scripts/*.sh /shared/tools/`
+- For older systems: `cp src/gpu_monitor/scripts/*.sh /shared/tools/`
 
 ## 🔧 Admin Contact
 

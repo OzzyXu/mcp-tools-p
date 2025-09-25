@@ -196,7 +196,7 @@ For servers without Python 3.8+:
 
 ```bash
 # Copy bash scripts (requires only Bash 4.0+)
-sudo cp /opt/gpu-monitor/src/gpu_monitor/bash_scripts/*.sh /shared/tools/
+sudo cp /opt/gpu-monitor/src/gpu_monitor/scripts/*.sh /shared/tools/
 sudo chmod +x /shared/tools/*.sh
 
 # Edit configuration in each script

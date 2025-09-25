@@ -118,7 +118,7 @@ Format: `"server_id:hostname"`
 ### Option 1: Copy Individual Scripts
 ```bash
 # Copy to shared location
-cp src/gpu_monitor/bash_scripts/*.sh /shared/tools/
+cp src/gpu_monitor/scripts/*.sh /shared/tools/
 chmod +x /shared/tools/*.sh
 
 # Users run:

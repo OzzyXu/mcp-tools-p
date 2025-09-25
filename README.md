@@ -118,5 +118,5 @@ A: Use the bash scripts: `/shared/tools/gpu_status.sh` - works on any Unix/Linux
 
 - **[Setup Guide](docs/deployment.md)** - How to deploy this for your team
 - **[Configuration](docs/configuration.md)** - Server settings and options
-- **[Bash Scripts](src/gpu_monitor/bash_scripts/README.md)** - For older systems without Python 3.8+
+- **[Bash Scripts](src/gpu_monitor/scripts/README.md)** - For older systems without Python 3.8+
 - **Config file**: `src/gpu_monitor/servers.json` - Edit with your cluster details
