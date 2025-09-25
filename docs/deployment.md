@@ -125,7 +125,9 @@ sudo chown gpu-monitor:gpu-monitor /etc/gpu-monitor/server_config.json
 
 ### 5. Configure SSH for Service User
 
-The GPU Monitor service needs SSH access to cluster nodes:
+The GPU Monitor service needs SSH access to cluster nodes.
+
+**⚠️  Important**: The automated script includes proper error handling, timeout settings, and validates all 7 GPU servers. It's much more reliable than manual setup.
 
 ```bash
 # Switch to service user
@@ -134,13 +136,27 @@ sudo -u gpu-monitor bash
 # Generate SSH key (no passphrase for service)
 ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519 -N ""
 
-# Copy public key to all GPU nodes
-for server in gpu01 gpu02 gpu03; do
-    ssh-copy-id -i ~/.ssh/id_ed25519.pub monitor@$server.cluster.internal
+# Option 1: Use the automated setup script (recommended)
+curl -O https://raw.githubusercontent.com/OzzyXu/mcp-tools-p/main/scripts/setup-ssh-keys.sh
+chmod +x setup-ssh-keys.sh
+sudo -u gpu-monitor ./setup-ssh-keys.sh
+
+# Option 2: Manual setup
+#!/usr/bin/env bash
+set -euo pipefail
+
+KEY="${HOME}/.ssh/id_ed25519.pub"
+servers=(gpu01 gpu02 gpu03 gpu04 gpu05 gpu06 gpu07)
+
+for server in "${servers[@]}"; do
+    ssh-copy-id \
+        -i "$KEY" \
+        -o StrictHostKeyChecking=accept-new \
+        "monitor@python2-${server}.ard-gpu1.hpos.rnd.sas.com"
 done
 
 # Test connectivity
-ssh gpu01.cluster.internal "nvidia-smi --version"
+ssh python2-gpu1.ard-gpu1.hpos.rnd.sas.com "nvidia-smi --version"
 ```
 
 ### 6. Start and Enable Service
@@ -420,12 +436,21 @@ The systemd service includes security settings:
 sudo -u gpu-monitor ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_new -N ""
 
 # Update authorized_keys on all nodes
-for server in gpu01 gpu02 gpu03; do
-    ssh-copy-id -i ~/.ssh/id_ed25519_new.pub monitor@$server.cluster.internal
+#!/usr/bin/env bash
+set -euo pipefail
+
+KEY="${HOME}/.ssh/id_ed25519_new.pub"
+servers=(gpu01 gpu02 gpu03 gpu04 gpu05 gpu06 gpu07)
+
+for server in "${servers[@]}"; do
+    ssh-copy-id \
+        -i "$KEY" \
+        -o StrictHostKeyChecking=accept-new \
+        "monitor@python2-${server}.ard-gpu1.hpos.rnd.sas.com"
 done
 
 # Test new key
-ssh -i ~/.ssh/id_ed25519_new gpu01.cluster.internal "echo 'New key works'"
+ssh -i ~/.ssh/id_ed25519_new python2-gpu1.ard-gpu1.hpos.rnd.sas.com "echo 'New key works'"
 
 # Replace old key
 sudo -u gpu-monitor mv ~/.ssh/id_ed25519_new ~/.ssh/id_ed25519
