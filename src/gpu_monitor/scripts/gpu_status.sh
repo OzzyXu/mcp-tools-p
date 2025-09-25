@@ -5,13 +5,13 @@
 
 # Configuration - Edit these for your cluster
 SERVERS=(
-    "python2-gpu1:python2-gpu1.ard-gpu1.hpos.rnd.sas.com"
-    "python2-gpu2:python2-gpu2.ard-gpu1.hpos.rnd.sas.com"
-    "python2-gpu3:python2-gpu3.ard-gpu1.hpos.rnd.sas.com"
-    "python2-gpu4:python2-gpu4.ard-gpu1.hpos.rnd.sas.com"
-    "python2-gpu5:python2-gpu5.ard-gpu1.hpos.rnd.sas.com"
-    "python2-gpu6:python2-gpu6.ard-gpu1.hpos.rnd.sas.com"
-    "python2-gpu7:python2-gpu7.ard-gpu1.hpos.rnd.sas.com"
+    "gpu01:python2-gpu1.ard-gpu1.hpos.rnd.sas.com"
+    "gpu02:python2-gpu2.ard-gpu1.hpos.rnd.sas.com"
+    "gpu03:python2-gpu3.ard-gpu1.hpos.rnd.sas.com"
+    "gpu04:python2-gpu4.ard-gpu1.hpos.rnd.sas.com"
+    "gpu05:python2-gpu5.ard-gpu1.hpos.rnd.sas.com"
+    "gpu06:python2-gpu6.ard-gpu1.hpos.rnd.sas.com"
+    "gpu07:python2-gpu7.ard-gpu1.hpos.rnd.sas.com"
 )
 
 SSH_TIMEOUT=5
@@ -26,7 +26,7 @@ print_usage() {
     echo "Usage: $0 [server_id]"
     echo "Examples:"
     echo "  $0           # Check all servers"
-    echo "  $0 python2-gpu1     # Check specific server"
+    echo "  $0 gpu01     # Check specific server"
     echo ""
     echo "Available servers:"
     for server in "${SERVERS[@]}"; do

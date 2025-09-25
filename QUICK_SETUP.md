@@ -19,7 +19,7 @@
 ```
 "Which GPU server is free?"
 "Show my GPU usage"
-"Kill my processes on python2-gpu1"
+"Kill my processes on gpu01"
 ```
 
 **💡 Advanced:** Use `@gpu://status` for direct data access or ask for "GPU availability summary" to trigger smart analysis prompts. See [detailed examples](USER_GUIDE.md#advanced-using-mcp-resources-and-prompts).

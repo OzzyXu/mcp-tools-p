@@ -5,13 +5,13 @@
 
 # Configuration - Edit these for your cluster
 SERVERS=(
-    "python2-gpu1:python2-gpu1.ard-gpu1.hpos.rnd.sas.com"
-    "python2-gpu2:python2-gpu2.ard-gpu1.hpos.rnd.sas.com"
-    "python2-gpu3:python2-gpu3.ard-gpu1.hpos.rnd.sas.com"
-    "python2-gpu4:python2-gpu4.ard-gpu1.hpos.rnd.sas.com"
-    "python2-gpu5:python2-gpu5.ard-gpu1.hpos.rnd.sas.com"
-    "python2-gpu6:python2-gpu6.ard-gpu1.hpos.rnd.sas.com"
-    "python2-gpu7:python2-gpu7.ard-gpu1.hpos.rnd.sas.com"
+    "gpu01:python2-gpu1.ard-gpu1.hpos.rnd.sas.com"
+    "gpu02:python2-gpu2.ard-gpu1.hpos.rnd.sas.com"
+    "gpu03:python2-gpu3.ard-gpu1.hpos.rnd.sas.com"
+    "gpu04:python2-gpu4.ard-gpu1.hpos.rnd.sas.com"
+    "gpu05:python2-gpu5.ard-gpu1.hpos.rnd.sas.com"
+    "gpu06:python2-gpu6.ard-gpu1.hpos.rnd.sas.com"
+    "gpu07:python2-gpu7.ard-gpu1.hpos.rnd.sas.com"
 )
 
 SSH_TIMEOUT=5
@@ -28,7 +28,7 @@ print_usage() {
     echo "  $0                         # Check what would be killed for \$USER"
     echo "  $0 john                    # Check what would be killed for john"
     echo "  $0 john --confirm          # Kill john's processes on all servers"
-    echo "  $0 john python2-gpu1 --confirm    # Kill john's processes on python2-gpu1"
+    echo "  $0 john gpu01 --confirm    # Kill john's processes on gpu01"
     echo "  $0 john --dry-run          # Show what would be killed (same as no --confirm)"
     echo ""
     echo "Available servers:"

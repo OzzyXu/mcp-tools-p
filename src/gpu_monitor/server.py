@@ -113,27 +113,8 @@ async def check_gpu_status_tool(server_id: Optional[str] = None):
     return status.model_dump()
 
 
-@app.tool("check_my_usage")
-async def check_my_usage_tool(server_id: Optional[str] = None):
-    """
-    Check current user's GPU usage across servers.
-    Automatically detects the current user from the $USER environment variable.
-    
-    Args:
-        server_id (str, optional): Server ID to check. If not provided, checks all servers.
-        
-    Returns:
-        JSON with user's GPU usage summary including processes and memory consumption.
-    """
-    username = get_current_user()
-    monitor = get_monitor()
-    server_ids = [server_id] if server_id else None
-    usage = await monitor.get_user_usage(username, server_ids)
-    return usage.model_dump()
-
-
 @app.tool("check_user_usage")
-async def check_user_usage_tool(username: str, server_id: Optional[str] = None):
+async def check_user_usage_tool(username: Optional[str] = None, server_id: Optional[str] = None):
     """
     Check GPU usage for a specific user across servers.
     
@@ -145,33 +126,14 @@ async def check_user_usage_tool(username: str, server_id: Optional[str] = None):
         JSON with user's GPU usage summary including processes and memory consumption.
     """
     monitor = get_monitor()
+    username = get_current_user() if username is None else username
     server_ids = [server_id] if server_id else None
     usage = await monitor.get_user_usage(username, server_ids)
     return usage.model_dump()
 
 
-@app.tool("kill_my_tasks")
-async def kill_my_tasks_tool(server_id: Optional[str] = None, confirm: bool = False):
-    """
-    Kill all GPU tasks for the current user.
-    Automatically detects the current user from the $USER environment variable.
-    
-    Args:
-        server_id (str, optional): Server ID to kill tasks on. If not provided, kills on all servers.
-        confirm (bool): Must be set to True to actually kill tasks (safety measure).
-        
-    Returns:
-        JSON with results of kill operations per server.
-    """
-    username = get_current_user()
-    monitor = get_monitor()
-    server_ids = [server_id] if server_id else None
-    results = await monitor.kill_user_tasks(username, server_ids, confirm)
-    return results
-
-
 @app.tool("kill_user_tasks")
-async def kill_user_tasks_tool(username: str, server_id: Optional[str] = None, confirm: bool = False):
+async def kill_user_tasks_tool(username: Optional[str] = None, server_id: Optional[str] = None, confirm: bool = False):
     """
     Kill all GPU tasks for a specific user.
     
@@ -184,6 +146,7 @@ async def kill_user_tasks_tool(username: str, server_id: Optional[str] = None, c
         JSON with results of kill operations per server.
     """
     monitor = get_monitor()
+    username = get_current_user() if username is None else username
     server_ids = [server_id] if server_id else None
     results = await monitor.kill_user_tasks(username, server_ids, confirm)
     return results
@@ -204,8 +167,8 @@ def summarize_gpu_availability(servers: Optional[Dict[str, Any]] = None) -> str:
     
     if servers is None:
         body = (
-            "If a resource like `gpu://status` is present in context, "
-            "use it. Otherwise, ask the user to provide GPU status details."
+            "If servers data is not provided, ask the user whether to use the resource `gpu://status`. If so, use the resource. "
+            "Otherwise, ask the user to provide GPU status details."
         )
     else:
         body = f"Here is the current GPU server status:\n\n{json.dumps(servers, indent=2)}"
@@ -243,8 +206,8 @@ def analyze_user_usage(username: Optional[str] = None, usage: Optional[Dict[str,
     
     if usage is None:
         body = (
-            f"If a resource like `gpu://usage/{username}` is present in context, "
-            "use it. Otherwise, ask the user to provide usage details."
+            f"If usage data is not provided, ask the user whether to use the resource `gpu://usage/{username}`. If so, use the resource. "
+            "Otherwise, ask the user to provide usage details."
         )
     else:
         body = f"Here is their current GPU usage:\n\n{json.dumps(usage, indent=2)}"

@@ -7,7 +7,7 @@ Monitor your GPU cluster usage directly from VSCode or command line.
 Ask questions like:
 - **"Which GPU server is free?"** 
 - **"Show my current GPU usage"**
-- **"Kill all my processes on python2-gpu1"**
+- **"Kill all my processes on gpu01"**
 
 Get answers instantly in VSCode Copilot or run commands directly.
 
@@ -55,7 +55,7 @@ Add this to your VSCode MCP settings:
 ```
 "Which GPU server has the most free memory?"
 "Show my current GPU usage" 
-"Kill all my processes on python2-gpu1"
+"Kill all my processes on gpu01"
 ```
 
 ---

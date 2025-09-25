@@ -7,7 +7,7 @@ Quick setup guide for team members.
 Ask your GPUs questions in plain English:
 - **"Which GPU server is free?"**
 - **"Show my current GPU usage"** 
-- **"Kill all my processes on python2-gpu1"**
+- **"Kill all my processes on gpu01"**
 
 ## 💬 VSCode Setup (Recommended)
 
@@ -50,7 +50,7 @@ Now you can ask Copilot:
 ```
 "Which GPU server has the most free memory?"
 "Show my current GPU usage"
-"Kill all my processes on python2-gpu1"
+"Kill all my processes on gpu01"
 ```
 
 ## 🤖 Advanced: Using MCP Resources and Prompts
@@ -63,17 +63,17 @@ MCP resources provide direct access to GPU data that you can reference in your q
 
 #### Available Resources:
 - `gpu://status` - All server status data
-- `gpu://status/python2-gpu1` - Specific server status
+- `gpu://status/gpu01` - Specific server status
 - `gpu://usage/john` - User's usage across all servers  
-- `gpu://usage/john/python2-gpu1` - User's usage on specific server
+- `gpu://usage/john/gpu01` - User's usage on specific server
 
 #### How to Use Resources:
 ```
 # Reference specific server data
-"@gpu://status/python2-gpu1 Is this server suitable for a large training job?"
+"@gpu://status/gpu01 Is this server suitable for a large training job?"
 
 # Compare multiple servers
-"@gpu://status Compare python2-gpu1 and python2-gpu2 memory availability"
+"@gpu://status Compare gpu01 and gpu02 memory availability"
 
 # Analyze user patterns
 "@gpu://usage/john How efficiently is john using GPU resources?"
@@ -89,7 +89,7 @@ MCP prompts provide intelligent analysis of your GPU data with specialized forma
 "Summarize current GPU availability for job placement"
 
 # This automatically calls the prompt with current cluster data
-# Returns: "🟢 python2-gpu2: 90% free (78GB), 🟡 python2-gpu1: 60% free (45GB)..."
+# Returns: "🟢 gpu02: 90% free (78GB), 🟡 gpu01: 60% free (45GB)..."
 ```
 
 #### 2. **User Usage Analysis**  
@@ -106,10 +106,10 @@ MCP prompts provide intelligent analysis of your GPU data with specialized forma
 #### 3. **Process Kill Confirmation**
 ```
 # When killing processes, get formatted confirmation
-"I want to kill all my processes on python2-gpu1"
+"I want to kill all my processes on gpu01"
 
 # Copilot uses format_kill_confirmation prompt to show:
-# "⚠️ CONFIRM: Kill 3 processes for user on python2-gpu1"
+# "⚠️ CONFIRM: Kill 3 processes for user on gpu01"
 ```
 
 ### 💡 Practical Examples
@@ -121,7 +121,7 @@ You: "I need to run a large model training that will use 40GB GPU memory. Which 
 Copilot: 
 1. Fetches gpu://status 
 2. Uses summarize_gpu_availability prompt
-3. Responds: "🟢 python2-gpu2 is best - has 78GB free with only 10% utilization. python2-gpu1 is busy at 85% utilization."
+3. Responds: "🟢 gpu02 is best - has 78GB free with only 10% utilization. gpu01 is busy at 85% utilization."
 ```
 
 #### **Monitoring Resource Usage:**
@@ -136,19 +136,19 @@ Copilot:
 
 #### **Troubleshooting Issues:**
 ```
-You: "Why is python2-gpu1 running slowly?"
+You: "Why is gpu01 running slowly?"
 
 Copilot:
-1. Fetches gpu://status/python2-gpu1
+1. Fetches gpu://status/gpu01
 2. Analyzes utilization and memory usage
-3. Identifies: "python2-gpu1 is at 95% utilization with 15GB/16GB memory used. High memory pressure may cause slowdowns."
+3. Identifies: "gpu01 is at 95% utilization with 15GB/16GB memory used. High memory pressure may cause slowdowns."
 ```
 
 ### 🔧 Tips for Better Results
 
 #### **Be Specific with Server Names:**
 ```
-✅ Good: "Check python2-gpu1 availability"
+✅ Good: "Check gpu01 availability"
 ❌ Vague: "Check server availability"
 ```
 
@@ -161,7 +161,7 @@ Copilot:
 #### **Ask for Recommendations:**
 ```
 ✅ Good: "Which server is best for a 20GB model?"
-✅ Good: "Should I kill my processes on python2-gpu2?"
+✅ Good: "Should I kill my processes on gpu02?"
 ```
 
 #### **Use Time Context:**
