@@ -6,7 +6,7 @@ This guide covers deploying GPU Monitor for team use in production environments.
 
 GPU Monitor has two deployment components:
 
-1. **HTTP MCP Server**: Centralized service running on the cluster controller (port 8700)
+1. **HTTP MCP Server**: Centralized service running on the cluster controller (port 11694)
 2. **Standalone Script**: Failure-safe script with no dependencies, accessible to all users
 
 ## Prerequisites
@@ -38,10 +38,10 @@ Edit the server configuration:
 
 ```bash
 # Copy template
-cp src/gpu_monitor/servers.json /etc/gpu-monitor/servers.json
+cp src/gpu_monitor/server_config.json /etc/gpu-monitor/server_config.json
 
 # Edit with your cluster details
-sudo vim /etc/gpu-monitor/servers.json
+sudo vim /etc/gpu-monitor/server_config.json
 ```
 
 Example production configuration:
@@ -90,7 +90,7 @@ User=gpu-monitor
 Group=gpu-monitor
 WorkingDirectory=/opt/gpu-monitor
 Environment=PATH=/opt/gpu-monitor/.venv/bin:/usr/local/bin:/usr/bin:/bin
-ExecStart=/opt/gpu-monitor/.venv/bin/gpu-mcp-server --config /etc/gpu-monitor/servers.json --host 0.0.0.0 --port 8700
+ExecStart=/opt/gpu-monitor/.venv/bin/gpu-mcp-server --config /etc/gpu-monitor/server_config.json --host 0.0.0.0 --port 11694
 Restart=always
 RestartSec=5
 StandardOutput=journal
@@ -120,7 +120,7 @@ sudo chown gpu-monitor:gpu-monitor /var/log/gpu-monitor
 
 # Set ownership
 sudo chown -R gpu-monitor:gpu-monitor /opt/gpu-monitor
-sudo chown gpu-monitor:gpu-monitor /etc/gpu-monitor/servers.json
+sudo chown gpu-monitor:gpu-monitor /etc/gpu-monitor/server_config.json
 ```
 
 ### 5. Configure SSH for Service User
@@ -166,10 +166,10 @@ If using a firewall, allow access to the HTTP MCP server:
 
 ```bash
 # UFW example
-sudo ufw allow 8700/tcp
+sudo ufw allow 11694/tcp
 
 # firewalld example  
-sudo firewall-cmd --permanent --add-port=8700/tcp
+sudo firewall-cmd --permanent --add-port=11694/tcp
 sudo firewall-cmd --reload
 ```
 
@@ -186,8 +186,8 @@ sudo cp /opt/gpu-monitor/src/gpu_monitor/gpumonitor /shared/tools/gpumonitor
 sudo chmod +x /shared/tools/gpumonitor
 
 # Optionally copy configuration (script has defaults built-in)
-sudo cp /etc/gpu-monitor/servers.json /shared/tools/servers.json
-sudo chmod 644 /shared/tools/servers.json
+sudo cp /etc/gpu-monitor/server_config.json /shared/tools/server_config.json
+sudo chmod 644 /shared/tools/server_config.json
 ```
 
 ### 1b. Deploy Bash Scripts (Older Systems)
@@ -263,13 +263,13 @@ defaults
     timeout server 30s
 
 frontend gpu_monitor_frontend
-    bind *:8700
+    bind *:11694
     default_backend gpu_monitor_backend
 
 backend gpu_monitor_backend
     balance roundrobin
-    server controller1 controller1.cluster.internal:8700 check
-    server controller2 controller2.cluster.internal:8700 check
+    server controller1 controller1.cluster.internal:11694 check
+    server controller2 controller2.cluster.internal:11694 check
 ```
 
 ## Monitoring and Logging
@@ -311,7 +311,7 @@ Set up health checks:
 # Health check script for HTTP MCP server
 sudo tee /usr/local/bin/gpu-monitor-health << 'EOF'
 #!/bin/bash
-response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8700/healthz)
+response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:11694/healthz)
 if [ "$response" = "200" ]; then
     echo "OK: GPU Monitor is healthy"
     exit 0
@@ -330,7 +330,7 @@ Example integration with monitoring systems:
 
 ```bash
 # Prometheus metrics endpoint (if implemented)
-curl http://localhost:8700/metrics
+curl http://localhost:11694/metrics
 
 # Custom alerting script
 sudo tee /usr/local/bin/gpu-monitor-alert << 'EOF'
@@ -353,7 +353,7 @@ BACKUP_DIR="/backup/gpu-monitor/$(date +%Y%m%d)"
 mkdir -p "$BACKUP_DIR"
 
 # Backup configuration
-cp /etc/gpu-monitor/servers.json "$BACKUP_DIR/"
+cp /etc/gpu-monitor/server_config.json "$BACKUP_DIR/"
 cp /etc/systemd/system/gpu-monitor.service "$BACKUP_DIR/"
 
 # Backup logs (last 7 days)
@@ -382,7 +382,7 @@ fi
 systemctl stop gpu-monitor
 
 # Restore configuration
-cp "$BACKUP_DIR/servers.json" /etc/gpu-monitor/
+cp "$BACKUP_DIR/server_config.json" /etc/gpu-monitor/
 cp "$BACKUP_DIR/gpu-monitor.service" /etc/systemd/system/
 
 # Reload and restart
@@ -400,9 +400,9 @@ sudo chmod +x /usr/local/bin/restore-gpu-monitor
 
 ```bash
 # Restrict access to specific networks for HTTP MCP server
-sudo ufw allow from 10.0.0.0/8 to any port 8700
-sudo ufw allow from 192.168.0.0/16 to any port 8700
-sudo ufw deny 8700
+sudo ufw allow from 10.0.0.0/8 to any port 11694
+sudo ufw allow from 192.168.0.0/16 to any port 11694
+sudo ufw deny 11694
 ```
 
 ### 2. Service Security
@@ -442,7 +442,7 @@ sudo -u gpu-monitor mv ~/.ssh/id_ed25519_new.pub ~/.ssh/id_ed25519.pub
    sudo journalctl -u gpu-monitor -f
    
    # Verify configuration
-   sudo -u gpu-monitor gpu-mcp-server --config /etc/gpu-monitor/servers.json --help
+   sudo -u gpu-monitor gpu-mcp-server --config /etc/gpu-monitor/server_config.json --help
    ```
 
 2. **SSH connection failures**

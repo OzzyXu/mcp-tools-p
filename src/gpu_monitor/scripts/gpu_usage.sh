@@ -5,9 +5,13 @@
 
 # Configuration - Edit these for your cluster
 SERVERS=(
-    "gpu01:gpu01.cluster.local"
-    "gpu02:gpu02.cluster.local"
-    "gpu03:gpu03.cluster.local"
+    "python2-gpu1:python2-gpu1.ard-gpu1.hpos.rnd.sas.com"
+    "python2-gpu2:python2-gpu2.ard-gpu1.hpos.rnd.sas.com"
+    "python2-gpu3:python2-gpu3.ard-gpu1.hpos.rnd.sas.com"
+    "python2-gpu4:python2-gpu4.ard-gpu1.hpos.rnd.sas.com"
+    "python2-gpu5:python2-gpu5.ard-gpu1.hpos.rnd.sas.com"
+    "python2-gpu6:python2-gpu6.ard-gpu1.hpos.rnd.sas.com"
+    "python2-gpu7:python2-gpu7.ard-gpu1.hpos.rnd.sas.com"
 )
 
 SSH_TIMEOUT=5
@@ -23,7 +27,7 @@ print_usage() {
     echo "Examples:"
     echo "  $0                    # Check your usage (\$USER)"
     echo "  $0 john               # Check john's usage on all servers"
-    echo "  $0 john gpu01         # Check john's usage on gpu01"
+    echo "  $0 john python2-gpu1         # Check john's usage on python2-gpu1"
     echo ""
     echo "Available servers:"
     for server in "${SERVERS[@]}"; do

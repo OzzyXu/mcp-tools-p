@@ -30,7 +30,7 @@ class GPUMonitor:
     def _load_config(self, config_path: Optional[str] = None) -> ClusterConfig:
         """Load configuration from JSON file."""
         if config_path is None:
-            config_path = Path(__file__).parent / "servers.json"
+            config_path = Path(__file__).parent / "server_config.json"
         
         try:
             with open(config_path, 'r') as f:

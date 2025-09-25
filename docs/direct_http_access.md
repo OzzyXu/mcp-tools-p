@@ -10,7 +10,7 @@ Instead of using Remote-SSH and port forwarding, you can connect directly to the
 
 1. **GPU Monitor server** is running on the cluster controller
 2. **Network access** from your machine to the server
-3. **Firewall rules** allow access to port 8700
+3. **Firewall rules** allow access to port 11694
 4. **Python 3.8+** for standalone script (if needed as backup)
 
 ### Setup Steps
@@ -18,15 +18,15 @@ Instead of using Remote-SSH and port forwarding, you can connect directly to the
 #### Step 1: Get Server Address
 
 Ask your admin for the server's network address. It could be:
-- **Internal IP**: `http://10.0.1.100:8700`
-- **Hostname**: `http://gpu-controller.cluster.local:8700`
-- **Public domain**: `http://gpu-monitor.company.com:8700`
+- **Internal IP**: `http://10.126.6.227:11694`
+- **Hostname**: `http://gpu-controller.cluster.local:11694`
+- **Public domain**: `http://gpu-monitor.company.com:11694`
 
 #### Step 2: Test Connection
 
 Open your browser and visit the server URL:
 ```
-http://your-server-address:8700
+http://10.126.6.227:11694
 ```
 
 You should see a response indicating the MCP server is running.
@@ -40,7 +40,7 @@ Add this to your VSCode MCP settings:
   "servers": {
     "gpu-mcp": { 
       "type": "http", 
-      "url": "http://your-server-address:8700" 
+      "url": "http://10.126.6.227:11694" 
     }
   }
 }
@@ -52,7 +52,7 @@ Add this to your VSCode MCP settings:
   "servers": {
     "gpu-mcp": { 
       "type": "http", 
-      "url": "http://10.0.1.100:8700" 
+      "url": "http://10.126.6.227:11694" 
     }
   }
 }
@@ -63,7 +63,7 @@ Add this to your VSCode MCP settings:
   "servers": {
     "gpu-mcp": { 
       "type": "http", 
-      "url": "http://gpu-controller.cluster.local:8700" 
+      "url": "http://gpu-controller.cluster.local:11694" 
     }
   }
 }
@@ -89,23 +89,23 @@ The GPU Monitor HTTP server needs to be accessible from user machines:
 Start the server with `--host 0.0.0.0` instead of `127.0.0.1`:
 
 ```bash
-uv run gpu-mcp-server --host 0.0.0.0 --port 8700
+uv run gpu-mcp-server --host 0.0.0.0 --port 11694
 ```
 
 #### 2. Firewall Configuration
 
-Allow incoming connections on port 8700:
+Allow incoming connections on port 11694:
 
 ```bash
 # UFW (Ubuntu)
-sudo ufw allow 8700/tcp
+sudo ufw allow 11694/tcp
 
 # firewalld (CentOS/RHEL)
-sudo firewall-cmd --permanent --add-port=8700/tcp
+sudo firewall-cmd --permanent --add-port=11694/tcp
 sudo firewall-cmd --reload
 
 # iptables
-sudo iptables -A INPUT -p tcp --dport 8700 -j ACCEPT
+sudo iptables -A INPUT -p tcp --dport 11694 -j ACCEPT
 ```
 
 #### 3. Network Security (Optional)
@@ -114,11 +114,11 @@ Restrict access to specific networks:
 
 ```bash
 # Allow only internal network
-sudo ufw allow from 10.0.0.0/8 to any port 8700
-sudo ufw allow from 192.168.0.0/16 to any port 8700
+sudo ufw allow from 10.0.0.0/8 to any port 11694
+sudo ufw allow from 192.168.0.0/16 to any port 11694
 
 # Deny all other access
-sudo ufw deny 8700/tcp
+sudo ufw deny 11694/tcp
 ```
 
 #### 4. Systemd Service Update
@@ -127,7 +127,7 @@ Update the systemd service to bind to all interfaces:
 
 ```bash
 # Edit /etc/systemd/system/gpu-monitor.service
-ExecStart=/opt/gpu-monitor/.venv/bin/gpu-mcp-server --config /etc/gpu-monitor/servers.json --host 0.0.0.0 --port 8700
+ExecStart=/opt/gpu-monitor/.venv/bin/gpu-mcp-server --config /etc/gpu-monitor/server_config.json --host 0.0.0.0 --port 11694
 
 # Reload and restart
 sudo systemctl daemon-reload
@@ -180,10 +180,10 @@ The GPU Monitor MCP server includes:
 ### Recommended Setup
 ```bash
 # Bind to internal network interface only
-gpu-mcp-server --host 10.0.1.100 --port 8700
+gpu-mcp-server --host 10.0.1.100 --port 11694
 
 # Or use reverse proxy with HTTPS
-nginx → https://gpu-monitor.company.com → http://localhost:8700
+nginx → https://gpu-monitor.company.com → http://localhost:11694
 ```
 
 ## 🌐 Advanced: Reverse Proxy Setup
@@ -200,7 +200,7 @@ server {
     ssl_certificate_key /path/to/key.pem;
     
     location / {
-        proxy_pass http://localhost:8700;
+        proxy_pass http://localhost:11694;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -219,8 +219,8 @@ server {
     SSLCertificateKeyFile /path/to/key.pem
     
     ProxyPreserveHost On
-    ProxyPass / http://localhost:8700/
-    ProxyPassReverse / http://localhost:8700/
+    ProxyPass / http://localhost:11694/
+    ProxyPassReverse / http://localhost:11694/
 </VirtualHost>
 ```
 
@@ -229,7 +229,7 @@ server {
 ### 1. Test Server Connectivity
 ```bash
 # From user machine
-curl http://your-server-address:8700
+curl http://10.126.6.227:11694
 
 # Should return MCP server response
 ```
@@ -237,8 +237,8 @@ curl http://your-server-address:8700
 ### 2. Test MCP Functionality
 ```bash
 # Test specific endpoints
-curl http://your-server-address:8700/resources
-curl http://your-server-address:8700/tools
+curl http://10.126.6.227:11694/resources
+curl http://10.126.6.227:11694/tools
 ```
 
 ### 3. Verify VSCode Connection
@@ -251,16 +251,16 @@ curl http://your-server-address:8700/tools
 
 **"Connection refused"**
 - Check if server is running: `systemctl status gpu-monitor`
-- Verify port binding: `netstat -tlnp | grep 8700`
+- Verify port binding: `netstat -tlnp | grep 11694`
 - Test firewall: `sudo ufw status`
 
 **"Server not accessible from remote machine"**
 - Verify server binds to `0.0.0.0` not `127.0.0.1`
 - Check network firewall rules
-- Test with `telnet server-address 8700`
+- Test with `telnet server-address 11694`
 
 **"VSCode MCP connection fails"**
-- Verify URL format: `http://server:8700` (no trailing slash)
+- Verify URL format: `http://server:11694` (no trailing slash)
 - Check VSCode MCP extension logs
 - Test URL directly in browser first
 

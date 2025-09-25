@@ -23,7 +23,7 @@ gpu-mcp-server = "gpu_monitor.server:main"
 "src" = ""
 
 [tool.hatchling.build.targets.wheel.shared-data]
-"src/gpu_monitor/servers.json" = "gpu_monitor/servers.json"
+"src/gpu_monitor/server_config.json" = "gpu_monitor/server_config.json"
 "src/gpu_monitor/gpumonitor" = "gpu_monitor/gpumonitor"
 
 [project.optional-dependencies]

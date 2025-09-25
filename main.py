@@ -15,7 +15,7 @@ def main():
         print("Starting GPU Monitor MCP Server...")
         print("Use 'uv run python main.py status' for CLI mode")
         print("Or use dedicated commands: 'uv run gpu-monitor status' or 'uv run gpu-mcp-server'")
-        print("Config file: src/gpu_monitor/servers.json")
+        print("Config file: src/gpu_monitor/server_config.json")
         mcp_main()
 
 

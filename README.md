@@ -7,7 +7,7 @@ Monitor your GPU cluster usage directly from VSCode or command line.
 Ask questions like:
 - **"Which GPU server is free?"** 
 - **"Show my current GPU usage"**
-- **"Kill all my processes on gpu01"**
+- **"Kill all my processes on python2-gpu1"**
 
 Get answers instantly in VSCode Copilot or run commands directly.
 
@@ -29,8 +29,8 @@ The admin has set up a GPU monitor server. Connect using **one of these methods*
 #### Option A: Use Ports Panel (Remote-SSH)
 1. Connect to the server via **Remote-SSH**
 2. Open **Ports view**: `Ctrl+Shift+P` → "Ports: Focus on Ports View"
-3. Click **"Add Port"** → Enter `8700`
-4. Now `http://127.0.0.1:8700` works on your local machine
+3. Click **"Add Port"** → Enter `11694`
+4. Now `http://10.126.6.227:11694` works on your local machine
 
 #### Option B: Use VS Code Task (One-Click)
 1. Open Command Palette: `Ctrl+Shift+P`
@@ -45,7 +45,7 @@ Add this to your VSCode MCP settings:
   "servers": {
     "gpu-mcp": { 
       "type": "http", 
-      "url": "http://127.0.0.1:8700" 
+      "url": "http://10.126.6.227:11694" 
     }
   }
 }
@@ -55,7 +55,7 @@ Add this to your VSCode MCP settings:
 ```
 "Which GPU server has the most free memory?"
 "Show my current GPU usage" 
-"Kill all my processes on gpu01"
+"Kill all my processes on python2-gpu1"
 ```
 
 ---
@@ -119,4 +119,4 @@ A: Use the bash scripts: `/shared/tools/gpu_status.sh` - works on any Unix/Linux
 - **[Setup Guide](docs/deployment.md)** - How to deploy this for your team
 - **[Configuration](docs/configuration.md)** - Server settings and options
 - **[Bash Scripts](src/gpu_monitor/scripts/README.md)** - For older systems without Python 3.8+
-- **Config file**: `src/gpu_monitor/servers.json` - Edit with your cluster details
+- **Config file**: `src/gpu_monitor/server_config.json` - Edit with your cluster details

@@ -4,7 +4,7 @@ This document explains how to configure the GPU Monitor tool.
 
 ## Server Configuration
 
-The GPU Monitor uses a JSON configuration file to define the cluster servers and settings. The default configuration is located at `src/gpu_monitor/servers.json`.
+The GPU Monitor uses a JSON configuration file to define the cluster servers and settings. The default configuration is located at `src/gpu_monitor/server_config.json`.
 
 ### Basic Configuration Structure
 
@@ -76,13 +76,13 @@ The `settings` object controls runtime behavior:
 
 ```bash
 # CLI usage
-gpu-monitor --config /custom/path/servers.json status
+gpu-monitor --config /custom/path/server_config.json status
 
 # MCP server usage  
-gpu-mcp-server --config /custom/path/servers.json
+gpu-mcp-server --config /custom/path/server_config.json
 
 # Standalone script usage
-./src/gpu_monitor/gpumonitor --config /custom/path/servers.json status
+./src/gpu_monitor/gpumonitor --config /custom/path/server_config.json status
 ```
 
 #### Environment-Specific Configurations

@@ -1,0 +1,44 @@
+{
+  "servers": [
+    {
+      "id": "python2-gpu1",
+      "hostname": "python2-gpu1.ard-gpu1.hpos.rnd.sas.com",
+      "description": "GPU Server 1"
+    },
+    {
+      "id": "python2-gpu2", 
+      "hostname": "python2-gpu2.ard-gpu1.hpos.rnd.sas.com",
+      "description": "GPU Server 2"
+    },
+    {
+      "id": "python2-gpu3",
+      "hostname": "python2-gpu3.ard-gpu1.hpos.rnd.sas.com", 
+      "description": "GPU Server 3"
+    },
+    {
+      "id": "python2-gpu4",
+      "hostname": "python2-gpu4.ard-gpu1.hpos.rnd.sas.com", 
+      "description": "GPU Server 4"
+    },
+    {
+      "id": "python2-gpu5",
+      "hostname": "python2-gpu5.ard-gpu1.hpos.rnd.sas.com", 
+      "description": "GPU Server 5"
+    },
+    {
+      "id": "python2-gpu6",
+      "hostname": "python2-gpu6.ard-gpu1.hpos.rnd.sas.com", 
+      "description": "GPU Server 6"
+    },
+    {
+      "id": "python2-gpu7",
+      "hostname": "python2-gpu7.ard-gpu1.hpos.rnd.sas.com", 
+      "description": "GPU Server 7"
+    }
+  ],
+  "settings": {
+    "cache_ttl": 30,
+    "ssh_timeout": 5,
+    "max_concurrent": 4
+  }
+}

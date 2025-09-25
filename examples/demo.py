@@ -81,7 +81,7 @@ async def demo():
     
     print("✅ Demo completed!")
     print("\n📖 Next steps:")
-    print("1. Edit src/gpu_monitor/servers.json with your actual GPU server hostnames")
+    print("1. Edit src/gpu_monitor/server_config.json with your actual GPU server hostnames")
     print("2. Test CLI: uv run gpu-monitor status")
     print("3. Start MCP server: uv run gpu-mcp-server")
     print("4. Install for team: uv sync && uv pip install -e .")

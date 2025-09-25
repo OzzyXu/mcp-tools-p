@@ -190,20 +190,28 @@ async def kill_user_tasks_tool(username: str, server_id: Optional[str] = None, c
 
 
 @app.prompt("summarize_gpu_availability")
-def summarize_gpu_availability(servers: Dict[str, Any]) -> str:
+def summarize_gpu_availability(servers: Optional[Dict[str, Any]] = None) -> str:
     """
     Summarize GPU availability across the cluster in natural language.
     
     Args:
-        servers: JSON object with GPU server status data
+        servers: Optional JSON object with GPU server status data. If None, prompts to use gpu://status resource.
     
     Returns:
         A human-friendly summary of GPU availability and recommendations
     """
-    return (
-        f"You are a helpful assistant analyzing GPU cluster availability.\n\n"
-        f"Here is the current GPU server status:\n\n{json.dumps(servers, indent=2)}\n\n"
-        "Provide a concise summary highlighting:\n"
+    header = "You are a helpful assistant analyzing GPU cluster availability.\n\n"
+    
+    if servers is None:
+        body = (
+            "If a resource like `gpu://status` is present in context, "
+            "use it. Otherwise, ask the user to provide GPU status details."
+        )
+    else:
+        body = f"Here is the current GPU server status:\n\n{json.dumps(servers, indent=2)}"
+    
+    return header + body + (
+        "\n\nProvide a concise summary highlighting:\n"
         "1. Which server is most available (lowest utilization, most free memory)\n"
         "2. Overall cluster utilization\n"
         "3. Any servers that are offline or have issues\n"
@@ -214,21 +222,35 @@ def summarize_gpu_availability(servers: Dict[str, Any]) -> str:
 
 
 @app.prompt("analyze_user_usage") 
-def analyze_user_usage(username: str, usage: Dict[str, Any]) -> str:
+def analyze_user_usage(username: Optional[str] = None, usage: Optional[Dict[str, Any]] = None) -> str:
     """
     Analyze a user's GPU usage and provide recommendations.
     
     Args:
-        username: The username being analyzed
-        usage: JSON object with user's GPU usage summary
+        username: The username being analyzed. If None, uses $USER environment variable.
+        usage: JSON object with user's GPU usage summary. If None, prompts to use gpu://usage resource.
     
     Returns:
         Analysis and recommendations for the user's GPU usage
     """
-    return (
-        f"You are a helpful assistant analyzing GPU usage for user {username}.\n\n"
-        f"Here is their current GPU usage:\n\n{json.dumps(usage, indent=2)}\n\n"
-        "Provide an analysis including:\n"
+    import os
+    
+    # Auto-detect username if not provided
+    if username is None:
+        username = os.getenv('USER', 'current user')
+    
+    header = f"You are a helpful assistant analyzing GPU usage for user {username}.\n\n"
+    
+    if usage is None:
+        body = (
+            f"If a resource like `gpu://usage/{username}` is present in context, "
+            "use it. Otherwise, ask the user to provide usage details."
+        )
+    else:
+        body = f"Here is their current GPU usage:\n\n{json.dumps(usage, indent=2)}"
+    
+    return header + body + (
+        "\n\nProvide an analysis including:\n"
         "1. Total resource consumption (processes, memory)\n"
         "2. Which servers they're using\n"
         "3. Whether their usage seems efficient\n"
@@ -238,21 +260,36 @@ def analyze_user_usage(username: str, usage: Dict[str, Any]) -> str:
 
 
 @app.prompt("format_kill_confirmation")
-def format_kill_confirmation(username: str, server_id: str, process_count: int) -> str:
+def format_kill_confirmation(username: Optional[str] = None, server_id: Optional[str] = None, process_count: Optional[int] = None) -> str:
     """
     Format a confirmation message for killing user processes.
     
     Args:
-        username: Username whose processes will be killed
-        server_id: Server ID (or "all" for all servers)
-        process_count: Number of processes to be killed
+        username: Username whose processes will be killed. If None, uses $USER environment variable.
+        server_id: Server ID (or "all" for all servers). If None, defaults to "all servers".
+        process_count: Number of processes to be killed. If None, uses generic text.
     
     Returns:
         Formatted confirmation message for process termination
     """
+    import os
+    
+    # Auto-detect username if not provided
+    if username is None:
+        username = os.getenv('USER', 'current user')
+    
+    # Default values for optional parameters
+    if server_id is None:
+        server_id = "all servers"
+    
+    if process_count is None:
+        process_text = "GPU processes"
+    else:
+        process_text = f"{process_count} GPU processes"
+    
     return (
         f"⚠️  **CONFIRM PROCESS TERMINATION** ⚠️\n\n"
-        f"You are about to kill {process_count} GPU processes for user {username} on {server_id}.\n\n"
+        f"You are about to kill {process_text} for user {username} on {server_id}.\n\n"
         "This action is IRREVERSIBLE and will:\n"
         "- Terminate all running training/inference jobs\n"
         "- Potentially lose unsaved work\n"
@@ -268,7 +305,7 @@ def main():
     parser = argparse.ArgumentParser(description="GPU Monitor HTTP MCP Server")
     parser.add_argument("--config", help="Path to configuration file")
     parser.add_argument("--host", default="127.0.0.1", help="Host to bind to")
-    parser.add_argument("--port", type=int, default=8700, help="Port to bind to (default: 8700)")
+    parser.add_argument("--port", type=int, default=11694, help="Port to bind to (default: 11694)")
     
     args = parser.parse_args()
     

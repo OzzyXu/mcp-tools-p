@@ -4,13 +4,13 @@
 
 ### 1. Forward Port
 - `Ctrl+Shift+P` → **"Ports: Focus on Ports View"**
-- **Add Port** → `8700`
+- **Add Port** → `11694`
 
 ### 2. Add MCP Config
 ```json
 {
   "servers": {
-    "gpu-mcp": { "type": "http", "url": "http://127.0.0.1:8700" }
+    "gpu-mcp": { "type": "http", "url": "http://10.126.6.227:11694" }
   }
 }
 ```
@@ -19,7 +19,7 @@
 ```
 "Which GPU server is free?"
 "Show my GPU usage"
-"Kill my processes on gpu01"
+"Kill my processes on python2-gpu1"
 ```
 
 **💡 Advanced:** Use `@gpu://status` for direct data access or ask for "GPU availability summary" to trigger smart analysis prompts. See [detailed examples](USER_GUIDE.md#advanced-using-mcp-resources-and-prompts).

@@ -29,14 +29,39 @@ import argparse
 # Configuration - Edit this section for your cluster
 DEFAULT_SERVERS = [
     {
-        "id": "gpu01",
-        "hostname": "gpu01.cluster.local",
-        "description": "Primary training server"
+        "id": "python2-gpu1",
+        "hostname": "python2-gpu1.ard-gpu1.hpos.rnd.sas.com",
+        "description": "GPU Server 1"
     },
     {
-        "id": "gpu02", 
-        "hostname": "gpu02.cluster.local",
-        "description": "Secondary training server"
+        "id": "python2-gpu2", 
+        "hostname": "python2-gpu2.ard-gpu1.hpos.rnd.sas.com",
+        "description": "GPU Server 2"
+    },
+    {
+        "id": "python2-gpu3",
+        "hostname": "python2-gpu3.ard-gpu1.hpos.rnd.sas.com", 
+        "description": "GPU Server 3"
+    },
+    {
+        "id": "python2-gpu4",
+        "hostname": "python2-gpu4.ard-gpu1.hpos.rnd.sas.com", 
+        "description": "GPU Server 4"
+    },
+    {
+        "id": "python2-gpu5",
+        "hostname": "python2-gpu5.ard-gpu1.hpos.rnd.sas.com", 
+        "description": "GPU Server 5"
+    },
+    {
+        "id": "python2-gpu6",
+        "hostname": "python2-gpu6.ard-gpu1.hpos.rnd.sas.com", 
+        "description": "GPU Server 6"
+    },
+    {
+        "id": "python2-gpu7",
+        "hostname": "python2-gpu7.ard-gpu1.hpos.rnd.sas.com", 
+        "description": "GPU Server 7"
     }
 ]
 
@@ -109,7 +134,7 @@ class StandaloneGPUMonitor:
         
         # Try to find config in same directory as script
         script_dir = Path(__file__).parent
-        for config_name in ['servers.json', 'config.json', 'gpu-config.json']:
+        for config_name in ['server_config.json', 'config.json', 'gpu-config.json']:
             config_path = script_dir / config_name
             if config_path.exists():
                 try:
