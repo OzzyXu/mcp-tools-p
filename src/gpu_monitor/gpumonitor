@@ -1,0 +1,600 @@
+#!/usr/bin/env python3
+"""
+GPU Monitor - Standalone Script (No Dependencies Required)
+
+This script can be copied anywhere and run without installation.
+Requires: Python 3.8+ (standard library only)
+
+Usage: ./gpumonitor [action] [options]
+
+Examples:
+  ./gpumonitor status
+  ./gpumonitor usage john
+  ./gpumonitor kill john --confirm
+"""
+
+import asyncio
+import json
+import os
+import re
+import subprocess
+import sys
+import time
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional, Union, Any, Tuple
+import argparse
+
+
+# Configuration - Edit this section for your cluster
+DEFAULT_SERVERS = [
+    {
+        "id": "gpu01",
+        "hostname": "gpu01.cluster.local",
+        "description": "Primary training server"
+    },
+    {
+        "id": "gpu02", 
+        "hostname": "gpu02.cluster.local",
+        "description": "Secondary training server"
+    }
+]
+
+DEFAULT_SETTINGS = {
+    "cache_ttl": 30,
+    "ssh_timeout": 5,
+    "max_concurrent": 4
+}
+
+
+class GPUInfo:
+    """Information about a single GPU."""
+    
+    def __init__(self, index: int, name: str, utilization_percent: int, 
+                 memory_used_mb: int, memory_total_mb: int, memory_free_mb: int):
+        self.index = index
+        self.name = name
+        self.utilization_percent = utilization_percent
+        self.memory_used_mb = memory_used_mb
+        self.memory_total_mb = memory_total_mb
+        self.memory_free_mb = memory_free_mb
+
+
+class ProcessInfo:
+    """Information about a GPU process."""
+    
+    def __init__(self, pid: int, username: str, gpu_index: int, 
+                 memory_used_mb: int, process_name: str):
+        self.pid = pid
+        self.username = username
+        self.gpu_index = gpu_index
+        self.memory_used_mb = memory_used_mb
+        self.process_name = process_name
+
+
+class ServerStatus:
+    """Status of a single server."""
+    
+    def __init__(self, server_id: str, hostname: str, online: bool,
+                 error_message: Optional[str] = None, gpus: Optional[List[GPUInfo]] = None,
+                 processes: Optional[List[ProcessInfo]] = None, response_time_ms: Optional[float] = None):
+        self.server_id = server_id
+        self.hostname = hostname
+        self.online = online
+        self.error_message = error_message
+        self.gpus = gpus or []
+        self.processes = processes or []
+        self.response_time_ms = response_time_ms
+        self.last_updated = datetime.now()
+
+
+class StandaloneGPUMonitor:
+    """Standalone GPU monitor with no external dependencies."""
+    
+    def __init__(self, config_file: Optional[str] = None):
+        """Initialize the monitor."""
+        self.servers = self._load_servers(config_file)
+        self.settings = DEFAULT_SETTINGS.copy()
+        self._cache = {}  # (data, timestamp)
+    
+    def _load_servers(self, config_file: Optional[str]) -> List[Dict]:
+        """Load server configuration."""
+        if config_file and os.path.exists(config_file):
+            try:
+                with open(config_file, 'r') as f:
+                    config = json.load(f)
+                return config.get('servers', DEFAULT_SERVERS)
+            except Exception as e:
+                print(f"Warning: Could not load config file {config_file}: {e}")
+        
+        # Try to find config in same directory as script
+        script_dir = Path(__file__).parent
+        for config_name in ['servers.json', 'config.json', 'gpu-config.json']:
+            config_path = script_dir / config_name
+            if config_path.exists():
+                try:
+                    with open(config_path, 'r') as f:
+                        config = json.load(f)
+                    return config.get('servers', DEFAULT_SERVERS)
+                except Exception:
+                    continue
+        
+        return DEFAULT_SERVERS
+    
+    def _is_cache_valid(self, key: str, ttl: int) -> bool:
+        """Check if cached data is still valid."""
+        if key not in self._cache:
+            return False
+        _, timestamp = self._cache[key]
+        return time.time() - timestamp < ttl
+    
+    def _get_cached(self, key: str) -> Optional[Any]:
+        """Get cached data if valid."""
+        if key in self._cache:
+            data, _ = self._cache[key]
+            return data
+        return None
+    
+    def _set_cache(self, key: str, data: Any):
+        """Set cached data with timestamp."""
+        self._cache[key] = (data, time.time())
+    
+    async def _run_ssh_command(self, hostname: str, command: str) -> Tuple[bool, str, float]:
+        """Run SSH command with timeout."""
+        start_time = time.time()
+        timeout = self.settings.get("ssh_timeout", 5)
+        
+        try:
+            process = await asyncio.create_subprocess_exec(
+                "ssh", hostname, command,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            
+            stdout, stderr = await asyncio.wait_for(
+                process.communicate(), 
+                timeout=timeout
+            )
+            
+            response_time = (time.time() - start_time) * 1000
+            
+            if process.returncode == 0:
+                return True, stdout.decode().strip(), response_time
+            else:
+                return False, stderr.decode().strip(), response_time
+                
+        except asyncio.TimeoutError:
+            return False, f"SSH timeout after {timeout}s", (time.time() - start_time) * 1000
+        except Exception as e:
+            return False, str(e), (time.time() - start_time) * 1000
+    
+    def _parse_nvidia_smi_output(self, output: str) -> Tuple[List[GPUInfo], List[ProcessInfo]]:
+        """Parse nvidia-smi output."""
+        gpus = []
+        processes = []
+        
+        try:
+            lines = output.split('\n')
+            
+            # Parse GPU information
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+                
+                # Look for GPU status lines
+                if 'GPU' in line and '%' in line and 'MB' in line:
+                    match = re.search(r'GPU\s*(\d+).*?(\d+)\s*%.*?(\d+)\s*/\s*(\d+)\s*MB', line)
+                    if match:
+                        gpu_idx, util, used_mem, total_mem = match.groups()
+                        gpu = GPUInfo(
+                            index=int(gpu_idx),
+                            name="GPU",  # Simplified
+                            utilization_percent=int(util),
+                            memory_used_mb=int(used_mem),
+                            memory_total_mb=int(total_mem),
+                            memory_free_mb=int(total_mem) - int(used_mem)
+                        )
+                        gpus.append(gpu)
+                
+                # Look for process lines
+                if 'PID' in line and any(x in line for x in ['python', 'java', 'julia', 'matlab']):
+                    # Try to extract process info
+                    parts = line.split()
+                    if len(parts) >= 5:
+                        try:
+                            pid = int(parts[0])
+                            username = parts[1] if parts[1].isalpha() else "unknown"
+                            gpu_idx = 0  # Default
+                            memory_mb = 0
+                            process_name = " ".join(parts[4:]) if len(parts) > 4 else "unknown"
+                            
+                            # Try to extract memory usage
+                            for part in parts:
+                                if 'MB' in part:
+                                    memory_mb = int(re.search(r'(\d+)', part).group(1))
+                                    break
+                            
+                            process = ProcessInfo(
+                                pid=pid,
+                                username=username,
+                                gpu_index=gpu_idx,
+                                memory_used_mb=memory_mb,
+                                process_name=process_name
+                            )
+                            processes.append(process)
+                        except (ValueError, AttributeError):
+                            continue
+        
+        except Exception as e:
+            print(f"Warning: Error parsing nvidia-smi output: {e}")
+        
+        return gpus, processes
+    
+    async def _get_server_status(self, server: Dict) -> ServerStatus:
+        """Get status for a single server."""
+        start_time = time.time()
+        
+        # Check cache first
+        cache_key = f"server_status_{server['id']}"
+        ttl = self.settings.get("cache_ttl", 30)
+        
+        if self._is_cache_valid(cache_key, ttl):
+            cached_data = self._get_cached(cache_key)
+            if cached_data:
+                return cached_data
+        
+        # Run nvidia-smi command
+        nvidia_cmd = "nvidia-smi --query-gpu=index,name,utilization.gpu,memory.used,memory.total --format=csv,noheader,nounits"
+        success, output, response_time = await self._run_ssh_command(server['hostname'], nvidia_cmd)
+        
+        if success:
+            gpus, processes = self._parse_nvidia_smi_output(output)
+            status = ServerStatus(
+                server_id=server['id'],
+                hostname=server['hostname'],
+                online=True,
+                gpus=gpus,
+                processes=processes,
+                response_time_ms=response_time
+            )
+        else:
+            status = ServerStatus(
+                server_id=server['id'],
+                hostname=server['hostname'],
+                online=False,
+                error_message=output,
+                response_time_ms=response_time
+            )
+        
+        # Cache the result
+        self._set_cache(cache_key, status)
+        return status
+    
+    async def get_cluster_status(self, server_ids: Optional[List[str]] = None) -> List[ServerStatus]:
+        """Get status for all servers or specific servers."""
+        servers_to_check = self.servers
+        if server_ids:
+            servers_to_check = [s for s in servers_to_check if s['id'] in server_ids]
+        
+        # Limit concurrency
+        max_concurrent = self.settings.get("max_concurrent", 4)
+        semaphore = asyncio.Semaphore(max_concurrent)
+        
+        async def get_status_with_semaphore(server):
+            async with semaphore:
+                return await self._get_server_status(server)
+        
+        tasks = [get_status_with_semaphore(server) for server in servers_to_check]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        # Filter out exceptions
+        statuses = []
+        for i, result in enumerate(results):
+            if isinstance(result, Exception):
+                print(f"Error getting status for {servers_to_check[i]['id']}: {result}")
+                statuses.append(ServerStatus(
+                    server_id=servers_to_check[i]['id'],
+                    hostname=servers_to_check[i]['hostname'],
+                    online=False,
+                    error_message=str(result)
+                ))
+            else:
+                statuses.append(result)
+        
+        return statuses
+    
+    async def get_user_usage(self, username: str, server_ids: Optional[List[str]] = None) -> Dict:
+        """Get GPU usage for a specific user."""
+        statuses = await self.get_cluster_status(server_ids)
+        
+        user_processes = []
+        servers_used = []
+        
+        for status in statuses:
+            if not status.online:
+                continue
+            
+            server_processes = [p for p in status.processes if p.username == username]
+            if server_processes:
+                servers_used.append(status.server_id)
+                user_processes.extend(server_processes)
+        
+        return {
+            "username": username,
+            "total_processes": len(user_processes),
+            "total_memory_mb": sum(p.memory_used_mb for p in user_processes),
+            "servers_used": servers_used,
+            "processes": user_processes
+        }
+    
+    async def kill_user_tasks(self, username: str, server_ids: Optional[List[str]] = None, 
+                            confirm: bool = False) -> Dict[str, str]:
+        """Kill all tasks for a user."""
+        if not confirm:
+            return {"error": "Must use --confirm to kill user tasks"}
+        
+        usage = await self.get_user_usage(username, server_ids)
+        
+        if not usage["processes"]:
+            return {"message": f"No processes found for user {username}"}
+        
+        results = {}
+        
+        # Group processes by server
+        processes_by_server = {}
+        for process in usage["processes"]:
+            server_id = None
+            # Find which server this process is on
+            for status in await self.get_cluster_status(server_ids):
+                if any(p.pid == process.pid for p in status.processes):
+                    server_id = status.server_id
+                    break
+            
+            if server_id:
+                if server_id not in processes_by_server:
+                    processes_by_server[server_id] = []
+                processes_by_server[server_id].append(process)
+        
+        for server_id, processes in processes_by_server.items():
+            server = next((s for s in self.servers if s['id'] == server_id), None)
+            if not server:
+                results[server_id] = "Server config not found"
+                continue
+            
+            pids = [str(p.pid) for p in processes]
+            kill_command = f"kill -9 {' '.join(pids)}"
+            
+            success, output, _ = await self._run_ssh_command(server['hostname'], kill_command)
+            
+            if success:
+                results[server_id] = f"Killed {len(pids)} processes"
+                # Invalidate cache
+                cache_key = f"server_status_{server_id}"
+                if cache_key in self._cache:
+                    del self._cache[cache_key]
+            else:
+                results[server_id] = f"Failed: {output}"
+        
+        return results
+
+
+def format_status_output(statuses: List[ServerStatus]) -> str:
+    """Format status for CLI output."""
+    output = []
+    online_servers = sum(1 for s in statuses if s.online)
+    total_gpus = sum(len(s.gpus) for s in statuses if s.online)
+    
+    output.append(f"🖥️  GPU Cluster Status ({online_servers}/{len(statuses)} servers online)")
+    output.append(f"📊 Total GPUs: {total_gpus}")
+    output.append("")
+    
+    for status in statuses:
+        if status.online:
+            output.append(f"🟢 {status.server_id} ({status.hostname}) - {status.response_time_ms:.1f}ms")
+            
+            if not status.gpus:
+                output.append("   No GPU information available")
+                continue
+            
+            for gpu in status.gpus:
+                utilization_emoji = "🟢" if gpu.utilization_percent < 30 else "🟡" if gpu.utilization_percent < 70 else "🔴"
+                memory_gb = gpu.memory_total_mb / 1024
+                free_gb = gpu.memory_free_mb / 1024
+                output.append(f"   {utilization_emoji} GPU{gpu.index}: {gpu.utilization_percent}% util, {free_gb:.1f}/{memory_gb:.1f}GB free")
+            
+            if status.processes:
+                output.append(f"   👥 {len(status.processes)} active processes")
+        else:
+            output.append(f"🔴 {status.server_id} ({status.hostname}) - OFFLINE")
+            if status.error_message:
+                output.append(f"   Error: {status.error_message}")
+        
+        output.append("")
+    
+    return "\n".join(output)
+
+
+def format_usage_output(usage: Dict) -> str:
+    """Format user usage for CLI output."""
+    output = []
+    output.append(f"👤 GPU Usage for {usage['username']}")
+    output.append(f"📊 {usage['total_processes']} processes using {usage['total_memory_mb']/1024:.1f}GB total")
+    output.append(f"🖥️  Active on: {', '.join(usage['servers_used']) if usage['servers_used'] else 'None'}")
+    output.append("")
+    
+    if not usage['processes']:
+        output.append("No active GPU processes found.")
+        return "\n".join(output)
+    
+    for process in usage['processes']:
+        memory_gb = process.memory_used_mb / 1024
+        output.append(f"   • PID {process.pid} on GPU{process.gpu_index}: {memory_gb:.1f}GB - {process.process_name}")
+    
+    return "\n".join(output)
+
+
+async def main():
+    """Main CLI function."""
+    parser = argparse.ArgumentParser(
+        description="GPU Monitor - Standalone script for GPU cluster monitoring",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  ./gpumonitor status                    # Check all servers
+  ./gpumonitor status gpu01              # Check specific server
+  ./gpumonitor usage john                # Check john's usage
+  ./gpumonitor usage                     # Check your usage ($USER)
+  ./gpumonitor kill john --confirm       # Kill john's processes
+  ./gpumonitor config                    # Show configuration
+        """
+    )
+    
+    subparsers = parser.add_subparsers(dest='action', help='Available actions')
+    
+    # Status command
+    status_parser = subparsers.add_parser('status', help='Check GPU status')
+    status_parser.add_argument('server', nargs='?', help='Server ID to check (optional)')
+    status_parser.add_argument('--json', action='store_true', help='Output in JSON format')
+    status_parser.add_argument('--config', help='Configuration file path')
+    
+    # Usage command
+    usage_parser = subparsers.add_parser('usage', help='Check user GPU usage')
+    usage_parser.add_argument('username', nargs='?', help='Username (default: $USER)')
+    usage_parser.add_argument('--server', help='Server ID to check (optional)')
+    usage_parser.add_argument('--json', action='store_true', help='Output in JSON format')
+    usage_parser.add_argument('--config', help='Configuration file path')
+    
+    # Kill command
+    kill_parser = subparsers.add_parser('kill', help='Kill user GPU processes')
+    kill_parser.add_argument('username', nargs='?', help='Username (default: $USER)')
+    kill_parser.add_argument('--server', help='Server ID to kill processes on (optional)')
+    kill_parser.add_argument('--confirm', action='store_true', help='Confirm the kill operation')
+    kill_parser.add_argument('--dry-run', action='store_true', help='Show what would be killed')
+    kill_parser.add_argument('--config', help='Configuration file path')
+    
+    # Config command
+    config_parser = subparsers.add_parser('config', help='Show configuration')
+    config_parser.add_argument('--config', help='Configuration file path')
+    
+    args = parser.parse_args()
+    
+    if not args.action:
+        parser.print_help()
+        return
+    
+    # Initialize monitor
+    monitor = StandaloneGPUMonitor(getattr(args, 'config', None))
+    
+    if args.action == 'status':
+        server_ids = [args.server] if args.server else None
+        statuses = await monitor.get_cluster_status(server_ids)
+        
+        if args.json:
+            # Convert to JSON-serializable format
+            json_data = []
+            for status in statuses:
+                json_data.append({
+                    "server_id": status.server_id,
+                    "hostname": status.hostname,
+                    "online": status.online,
+                    "error_message": status.error_message,
+                    "response_time_ms": status.response_time_ms,
+                    "gpus": [{
+                        "index": gpu.index,
+                        "name": gpu.name,
+                        "utilization_percent": gpu.utilization_percent,
+                        "memory_used_mb": gpu.memory_used_mb,
+                        "memory_total_mb": gpu.memory_total_mb,
+                        "memory_free_mb": gpu.memory_free_mb
+                    } for gpu in status.gpus],
+                    "processes": [{
+                        "pid": proc.pid,
+                        "username": proc.username,
+                        "gpu_index": proc.gpu_index,
+                        "memory_used_mb": proc.memory_used_mb,
+                        "process_name": proc.process_name
+                    } for proc in status.processes]
+                })
+            print(json.dumps(json_data, indent=2))
+        else:
+            print(format_status_output(statuses))
+    
+    elif args.action == 'usage':
+        username = args.username or os.environ.get('USER', 'unknown')
+        server_ids = [args.server] if args.server else None
+        usage = await monitor.get_user_usage(username, server_ids)
+        
+        if args.json:
+            # Convert processes to JSON-serializable format
+            usage_json = usage.copy()
+            usage_json['processes'] = [{
+                "pid": proc.pid,
+                "username": proc.username,
+                "gpu_index": proc.gpu_index,
+                "memory_used_mb": proc.memory_used_mb,
+                "process_name": proc.process_name
+            } for proc in usage['processes']]
+            print(json.dumps(usage_json, indent=2))
+        else:
+            print(format_usage_output(usage))
+    
+    elif args.action == 'kill':
+        username = args.username or os.environ.get('USER', 'unknown')
+        server_ids = [args.server] if args.server else None
+        
+        # First show what would be killed
+        usage = await monitor.get_user_usage(username, server_ids)
+        
+        if not usage['processes']:
+            print(f"No active GPU processes found for user {username}.")
+            return
+        
+        print(f"🎯 Processes for user {username}:")
+        for process in usage['processes']:
+            print(f"   • PID {process.pid} on GPU{process.gpu_index}: {process.process_name}")
+        
+        if args.dry_run:
+            print(f"\n🔍 Dry run - would kill {len(usage['processes'])} processes")
+            return
+        
+        confirm = args.confirm
+        if not confirm:
+            try:
+                response = input(f"\n⚠️  Kill {len(usage['processes'])} processes for {username}? (y/N): ")
+                confirm = response.lower().startswith('y')
+            except KeyboardInterrupt:
+                print("\nOperation cancelled.")
+                return
+        
+        if confirm:
+            print(f"\n💀 Killing processes for {username}...")
+            results = await monitor.kill_user_tasks(username, server_ids, confirm=True)
+            
+            for server_id, result in results.items():
+                if "Killed" in str(result):
+                    print(f"✅ {server_id}: {result}")
+                else:
+                    print(f"❌ {server_id}: {result}")
+        else:
+            print("Operation cancelled.")
+    
+    elif args.action == 'config':
+        print("📋 Current Configuration:")
+        print(f"Servers: {len(monitor.servers)}")
+        for server in monitor.servers:
+            print(f"  • {server['id']}: {server['hostname']} - {server.get('description', 'No description')}")
+        
+        print(f"\nSettings:")
+        for key, value in monitor.settings.items():
+            print(f"  • {key}: {value}")
+
+
+if __name__ == "__main__":
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("\nOperation cancelled.")
+    except Exception as e:
+        print(f"Error: {e}")
+        sys.exit(1)

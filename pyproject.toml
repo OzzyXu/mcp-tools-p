@@ -1,0 +1,50 @@
+[project]
+name = "gpu-monitor"
+version = "0.1.0"
+description = "MCP tool for monitoring GPU cluster status via VSCode Copilot"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastmcp>=0.1.0",
+    "asyncssh>=2.14.0",
+    "pydantic>=2.0.0",
+    "click>=8.0.0"
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.scripts]
+gpu-monitor = "gpu_monitor.cli:main"
+gpu-mcp-server = "gpu_monitor.mcp_server:main"
+
+[tool.hatchling.build.targets.wheel.sources]
+"src" = ""
+
+[tool.hatchling.build.targets.wheel.shared-data]
+"src/gpu_monitor/servers.json" = "gpu_monitor/servers.json"
+"src/gpu_monitor/gpumonitor" = "gpu_monitor/gpumonitor"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-mock>=3.10.0",
+    "ruff>=0.1.0"
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
