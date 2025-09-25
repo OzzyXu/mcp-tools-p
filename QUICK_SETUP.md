@@ -22,7 +22,12 @@
 "Kill my processes on gpu01"
 ```
 
-**💡 Advanced:** Use `@gpu://status` for direct data access or ask for "GPU availability summary" to trigger smart analysis prompts. See [detailed examples](USER_GUIDE.md#advanced-using-mcp-resources-and-prompts).
+**💡 Advanced:** 
+- Use `@gpu://status` for direct data access
+- Ask for "GPU availability summary" to trigger smart prompts
+- Use tool functions: "Use check_gpu_status tool" or "Use kill_user_tasks tool with confirm=true"
+
+See [detailed examples](USER_GUIDE.md#advanced-using-mcp-resources-and-prompts) and [tool functions guide](USER_GUIDE.md#mcp-tool-functions-direct-function-calls).
 
 ---
 

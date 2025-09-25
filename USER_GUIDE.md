@@ -170,6 +170,188 @@ Copilot:
 ✅ Good: "Which server is free right now?"
 ```
 
+## 🔧 MCP Tool Functions (Direct Function Calls)
+
+MCP tool functions provide direct access to GPU monitoring capabilities. These are called automatically when you ask Copilot certain questions, but you can also invoke them explicitly.
+
+### 📋 Available Tool Functions
+
+#### 1. **`check_gpu_status`** - Get Server Status
+```
+# Check all servers
+"Use check_gpu_status tool"
+
+# Check specific server  
+"Use check_gpu_status tool with server_id=gpu01"
+
+# What this returns:
+{
+  "servers": {
+    "gpu01": {
+      "online": true,
+      "gpus": [...], 
+      "total_memory_gb": 80,
+      "free_memory_gb": 45
+    }
+  }
+}
+```
+
+#### 2. **`check_user_usage`** - Get User's GPU Usage
+```
+# Check your own usage (auto-detects $USER)
+"Use check_user_usage tool"
+
+# Check specific user on all servers
+"Use check_user_usage tool with username=john"
+
+# Check specific user on specific server
+"Use check_user_usage tool with username=john and server_id=gpu01"
+
+# What this returns:
+{
+  "username": "john",
+  "total_processes": 3,
+  "total_memory_used_gb": 24,
+  "servers": {
+    "gpu01": {
+      "processes": [...],
+      "memory_used_gb": 24
+    }
+  }
+}
+```
+
+#### 3. **`kill_user_tasks`** - Terminate GPU Processes
+```
+# Kill your own processes (auto-detects $USER)
+"Use kill_user_tasks tool with confirm=true"
+
+# Kill specific user's processes on all servers
+"Use kill_user_tasks tool with username=john and confirm=true"
+
+# Kill processes on specific server only
+"Use kill_user_tasks tool with username=john, server_id=gpu01, and confirm=true"
+
+# ⚠️ IMPORTANT: Must set confirm=true to actually kill processes
+# Without confirm=true, it only shows what would be killed (dry run)
+```
+
+### 💡 How Tool Functions Work
+
+#### **Automatic Invocation:**
+When you ask natural language questions, Copilot automatically chooses the right tool:
+
+```
+You: "Show me GPU status on gpu01"
+→ Copilot calls: check_gpu_status(server_id="gpu01")
+→ Returns formatted status information
+
+You: "What's john's GPU usage?"  
+→ Copilot calls: check_user_usage(username="john")
+→ Returns john's usage across all servers
+
+You: "Kill all my processes on gpu02"
+→ Copilot calls: kill_user_tasks(server_id="gpu02", confirm=true)
+→ Terminates your processes on gpu02
+```
+
+#### **Explicit Invocation:**
+You can also call tools directly for precise control:
+
+```
+"Use the check_gpu_status tool to get status for gpu01"
+"Call check_user_usage with username alice"
+"Invoke kill_user_tasks for user bob on gpu03 with confirm true"
+```
+
+### 🎯 Tool Function Examples
+
+#### **Example 1: Resource Planning**
+```
+You: "Use check_gpu_status tool to see which servers have the most free memory"
+
+Copilot:
+1. Calls check_gpu_status() 
+2. Gets data for all servers
+3. Analyzes memory availability
+4. Responds: "gpu02 has 78GB free (most available), gpu01 has 45GB free, gpu03 is busy with only 12GB free"
+```
+
+#### **Example 2: User Monitoring**
+```
+You: "Use check_user_usage tool with username=alice to see her current workload"
+
+Copilot:
+1. Calls check_user_usage(username="alice")
+2. Gets alice's processes across all servers  
+3. Responds: "Alice is using 32GB GPU memory across 2 servers: 24GB on gpu01 (training job) and 8GB on gpu03 (inference)"
+```
+
+#### **Example 3: Process Management**
+```
+You: "Use kill_user_tasks tool with username=bob, server_id=gpu01, confirm=true"
+
+Copilot:
+1. Calls kill_user_tasks(username="bob", server_id="gpu01", confirm=true)
+2. Terminates bob's processes on gpu01
+3. Responds: "✅ Killed 2 processes for user bob on gpu01. Freed 16GB GPU memory."
+```
+
+### 🔒 Safety Features
+
+#### **Automatic User Detection:**
+- **Username defaults to $USER**: Tools auto-detect your username
+- **No accidental kills**: Must specify `confirm=true` for kill operations
+- **Dry run by default**: `kill_user_tasks` shows what would be killed unless confirmed
+
+#### **Scope Control:**
+- **Server-specific**: Can limit operations to specific servers
+- **User-specific**: Can check/kill only specific user's processes
+- **Confirmation required**: Destructive operations need explicit confirmation
+
+### 🚀 Advanced Usage Patterns
+
+#### **Combining Tools with Prompts:**
+```
+You: "Use check_gpu_status, then analyze_user_usage prompt to recommend the best server for my training job"
+
+Copilot:
+1. Calls check_gpu_status() to get current cluster state
+2. Uses summarize_gpu_availability prompt with the data
+3. Provides intelligent recommendation based on current usage
+```
+
+#### **Monitoring Workflows:**
+```
+You: "Use check_user_usage for alice, bob, and charlie, then tell me who's using resources most efficiently"
+
+Copilot:
+1. Calls check_user_usage() for each user
+2. Compares their resource utilization patterns
+3. Provides efficiency analysis and recommendations
+```
+
+#### **Troubleshooting:**
+```
+You: "gpu01 seems slow. Use check_gpu_status for gpu01 and check who's using it heavily"
+
+Copilot:
+1. Calls check_gpu_status(server_id="gpu01")
+2. Analyzes utilization and identifies heavy users
+3. Suggests actions to resolve performance issues
+```
+
+### 📊 Tool Output Format
+
+All tools return structured JSON data that Copilot can interpret and present in natural language. You can also ask for raw data:
+
+```
+"Use check_gpu_status tool and show me the raw JSON response"
+"Call check_user_usage and format the output as a table"
+"Use kill_user_tasks with dry run and list exactly what processes would be killed"
+```
+
 ## 🛠️ Command Line (Backup Method)
 
 If VSCode isn't working, use these commands:
