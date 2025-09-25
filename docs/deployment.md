@@ -136,8 +136,7 @@ sudo -u gpu-monitor bash
 # Generate SSH key (no passphrase for service)
 ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519 -N ""
 
-# Option 1: Use the automated setup script (recommended)
-curl -O https://raw.githubusercontent.com/OzzyXu/mcp-tools-p/main/scripts/setup-ssh-keys.sh
+# Option 1: Use the automated setup script under /src/gpu_monitor/scripts (recommended)
 chmod +x setup-ssh-keys.sh
 sudo -u gpu-monitor ./setup-ssh-keys.sh
 
