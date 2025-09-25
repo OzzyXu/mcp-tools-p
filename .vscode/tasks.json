@@ -1,0 +1,26 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Forward GPU Monitor Port",
+            "type": "shell",
+            "command": "echo",
+            "args": [
+                "🚀 GPU Monitor Port Forwarding Help\n\n1. Open Ports view: Ctrl+Shift+P → 'Ports: Focus on Ports View'\n2. Click 'Add Port' → Enter '8700'\n3. Use http://127.0.0.1:8700 in your MCP settings\n\nServer should be running on port 8700."
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "new",
+                "showReuseMessage": false,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "runOptions": {
+                "instanceLimit": 1
+            }
+        }
+    ]
+}
